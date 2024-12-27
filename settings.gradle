@@ -1,0 +1,8 @@
+rootProject.name = 'root'
+
+include ':global-utils'
+include ':service-discovery'
+include ':gateway'
+include ':config'
+
+include ':user-service'

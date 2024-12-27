@@ -1,0 +1,29 @@
+server:
+  port: 8888
+
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        git:
+          uri: git@github.com:khyu2/buycision-config.git
+          default-label: main
+          ignore-local-ssh-settings: true
+          private-key: |
+            -----BEGIN EC PRIVATE KEY-----
+            MHcCAQEEIGDc4ZJ3nBsmhVBwboYSmaB/GV9qqheJgh3a+ca3rkU6oAoGCCqGSM49
+            AwEHoUQDQgAEdgm7DD0yFmzNYJE1HUxgNJTIwHrENOH3v4BP7W0fh1Y9uy2DJpCN
+            8uk6ydsdTuLRUNAt5zxJYJUAybhdjrGmng==
+            -----END EC PRIVATE KEY-----
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    shutdown:
+      access: none

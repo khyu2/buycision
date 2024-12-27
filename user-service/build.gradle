@@ -1,6 +1,14 @@
 group = 'project'
 version = '0.0.1-SNAPSHOT'
 
+jar {
+    enabled = false
+}
+
+bootJar {
+    enabled = true
+}
+
 ext {
     set('springCloudVersion', "2024.0.0")
 }

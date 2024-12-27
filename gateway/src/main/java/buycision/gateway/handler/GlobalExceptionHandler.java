@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.reactive.error.ErrorWebExceptionHandler;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.buffer.DataBufferFactory;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -36,7 +37,7 @@ public class GlobalExceptionHandler implements ErrorWebExceptionHandler {
         log.error("예외 메시지: {}", exceptionType.getMessage());
 
         response.getHeaders().setContentType(APPLICATION_JSON);
-        response.setStatusCode(exceptionType.getHttpStatus());
+        response.setStatusCode(HttpStatusCode.valueOf(exceptionType.getHttpStatus().getStatusCode()));
 
         ExceptionResponse exceptionResponse = new ExceptionResponse(exceptionType);
         return response.writeWith(Mono.fromSupplier(() -> {

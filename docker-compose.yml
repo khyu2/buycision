@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  service-discovery:
+    build:
+      context: ./service-discovery
+      dockerfile: Dockerfile
+    container_name: service-discovery
+    ports:
+      - "8761:8761"
+    networks:
+      - app-network
+
+  config-server:
+    build:
+      context: ./config
+      dockerfile: Dockerfile
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    networks:
+      - app-network
+
+  gateway-service:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: gateway-service
+    environment:
+      - eureka.client.service-url.defaultZone=http://service-discovery:8761/eureka
+    ports:
+      - "8000:8000"
+    depends_on:
+      - service-discovery
+    networks:
+      - app-network
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    environment:
+      - spring.cloud.config.uri=http://config-server:8888
+      - eureka.client.service-url.defaultZone=http://service-discovery:8761/eureka
+    networks:
+      - app-network
+    depends_on:
+      - config-server
+      - service-discovery
+
+networks:
+  app-network:
+    driver: bridge

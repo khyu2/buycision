@@ -1,9 +1,9 @@
 package buycision.gateway.exception;
 
 import buycision.multimodule.globalutils.exception.ExceptionType;
+import buycision.multimodule.globalutils.exception.HttpStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor

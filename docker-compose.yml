@@ -6,6 +6,7 @@ services:
       context: ./service-discovery
       dockerfile: Dockerfile
     container_name: service-discovery
+    restart: always
     ports:
       - "8761:8761"
     networks:
@@ -16,8 +17,11 @@ services:
       context: ./config
       dockerfile: Dockerfile
     container_name: config-server
+    restart: always
     ports:
       - "8888:8888"
+    depends_on:
+      - service-discovery
     networks:
       - app-network
 
@@ -26,6 +30,7 @@ services:
       context: ./gateway
       dockerfile: Dockerfile
     container_name: gateway-service
+    restart: always
     environment:
       - eureka.client.service-url.defaultZone=http://service-discovery:8761/eureka
     ports:
@@ -40,14 +45,15 @@ services:
       context: ./user-service
       dockerfile: Dockerfile
     container_name: user-service
+    restart: unless-stopped
     environment:
       - spring.cloud.config.uri=http://config-server:8888
       - eureka.client.service-url.defaultZone=http://service-discovery:8761/eureka
+    depends_on:
+      - service-discovery
+      - config-server
     networks:
       - app-network
-    depends_on:
-      - config-server
-      - service-discovery
 
 networks:
   app-network:

@@ -18,8 +18,8 @@ services:
       dockerfile: Dockerfile
     container_name: config-server
     restart: always
-    ports:
-      - "8888:8888"
+    expose:
+      - "8888"
     depends_on:
       - service-discovery
     networks:

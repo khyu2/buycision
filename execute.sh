@@ -1,23 +1,60 @@
 #!/bin/bash
 
-# 에러가 발생하면 스크립트 종료
+# 에러 발생 시 스크립트 중단
 set -e
 
 echo ">>> Gradle 빌드 시작"
 
-# Gradle 빌드 (프로젝트 루트에서 실행)
+# 8888번 포트를 사용하는 프로세스 확인
+PORT=8888
+PID=$(lsof -ti :$PORT)
+
+if [ -n "$PID" ]; then
+  echo "포트 $PORT를 점유 중인 프로세스(PID: $PID)를 종료합니다."
+  kill -9 $PID
+  echo "포트 $PORT의 프로세스 종료 완료."
+else
+  echo "포트 $PORT를 점유 중인 프로세스가 없습니다."
+fi
+
+# Config Server만 빌드
+echo ">>> Config Server 빌드"
+./gradlew :config:clean :config:build
+
+# Config Server 독립 실행
+echo ">>> Config Server 실행"
+java -jar ./config/build/libs/config-*.jar &
+
+# Config Server PID 저장
+CONFIG_PID=$!
+
+# Config Server 준비될 때까지 대기
+echo ">>> Config Server 준비 중..."
+while ! curl -s http://localhost:8888/actuator/health | grep '"status":"UP"' > /dev/null; do
+  echo "Config Server가 준비되지 않았습니다. 다시 시도 중..."
+  sleep 2
+done
+
+echo ">>> Config Server 준비 완료"
+
+# 나머지 서비스 빌드
+echo ">>> 나머지 서비스 빌드 시작"
 ./gradlew clean build
 
-echo ">>> Gradle 빌드 완료"
+# Config Server 종료
+echo ">>> Config Server 종료"
+kill $CONFIG_PID
+wait $CONFIG_PID 2>/dev/null || true
 
-# Docker 이미지를 빌드하고, 도커 컴포즈로 컨테이너 실행
-echo ">>> Docker 이미지 빌드 및 컨테이너 시작"
+echo ">>> Config Server 종료 완료"
 
+# Docker Compose 실행
+echo ">>> Docker Compose 시작"
 docker-compose down && docker-compose up --build -d
 
-echo ">>> Docker Compose로 서비스 시작 완료"
+echo ">>> 모든 서비스 시작 완료"
 
-# 컨테이너 상태 확인
+# Docker Compose 상태 확인
 docker-compose ps
 
 echo ">>> 배포 완료"

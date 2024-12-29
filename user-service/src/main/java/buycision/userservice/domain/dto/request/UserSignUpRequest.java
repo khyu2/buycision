@@ -35,7 +35,7 @@ public record UserSignUpRequest(
                 .nickname(nickname)
                 .profileImageUrl(profileImageUrl)
                 .reliability(0.0)
-                .authority(Authority.USER)
+                .authority(Authority.ROLE_USER)
                 .build();
     }
 }

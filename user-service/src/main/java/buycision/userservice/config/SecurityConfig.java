@@ -1,12 +1,15 @@
 package buycision.userservice.config;
 
 import buycision.multimodule.globalutils.jwt.JwtProvider;
+import buycision.userservice.domain.service.impl.OAuth2UserServiceImpl;
+import buycision.userservice.filter.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -23,6 +26,8 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
+    private final OAuth2UserServiceImpl oAuth2UserService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Value("${cors.allowed-origins:http://localhost:3000}")
     private List<String> allowOriginList;
@@ -45,11 +50,11 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors((auth) -> auth.configurationSource(corsConfigurationSource()))
-
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
+                .logout(AbstractHttpConfigurer::disable)
                 .headers(header -> header.frameOptions(
-                        HeadersConfigurer.FrameOptionsConfig::sameOrigin
+                        HeadersConfigurer.FrameOptionsConfig::disable
                 ))
 
                 .sessionManagement((session) -> session
@@ -58,11 +63,20 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers("/").permitAll()
-                        .requestMatchers("/login").permitAll()
-                        .requestMatchers("swagger-ui/**").permitAll()
-                        .anyRequest().permitAll()
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        .anyRequest().authenticated()
                 )
 
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
+                        .successHandler(oAuth2SuccessHandler))
+
                 .build();
+    }
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring().requestMatchers("/error", "/favicon.ico");
     }
 }
